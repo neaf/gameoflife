@@ -15,6 +15,9 @@ class StateParser(object):
 class GameOfLife(object):
     def __init__(self, start=None):
         self.cells = start or []
+        self.set_initial()
+
+    def set_initial(self):
         self.marked_to_die = []
         self.marked_to_live = []
         self.neighbor_counts = {}
@@ -24,9 +27,19 @@ class GameOfLife(object):
             self.process_cell(cell)
         self.kill_marked_cells()
         self.spawn_cells()
+        self.set_initial()
 
     def spawn_cells(self):
-        pass
+        self.populate_marked_to_live()
+        self.give_birth()
+
+    def populate_marked_to_live(self):
+        for cell, count in self.neighbor_counts.items():
+            if count == 3:
+                self.marked_to_live.append(cell)
+
+    def give_birth(self):
+        self.cells = set(self.cells + self.marked_to_live)
 
     def kill_marked_cells(self):
         self.cells = filter(lambda cell: cell not in self.marked_to_die, self.cells)
@@ -41,9 +54,9 @@ class GameOfLife(object):
     def increase_neighbors_counts(self, cell):
         neighbors = self.get_neighbors_coordinates(cell)
         for neighbor in neighbors:
-            if not self.neighbor_counts.get(neighbor):
-                self.neighbor_counts[neighbor] = 0
-            self.neighbor_counts[neighbor] += 1
+            current = self.neighbor_counts.get(neighbor, 0)
+            self.neighbor_counts[neighbor] = current + 1
+
 
     def should_die(self, cell):
         if 1 < self.live_neighbors_count(cell) < 4:

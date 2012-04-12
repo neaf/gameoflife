@@ -2,7 +2,6 @@ from unittest import TestCase
 import mock
 from life import StateParser, GameOfLife
 
-
 class StateParserTest(TestCase):
     def test_input_parse(self):
         input = "1,1 1,4 44,54 124,54"
@@ -23,11 +22,21 @@ class GameOfLifeTest(TestCase):
         self.assertIn(cell, self.game.marked_to_die)
         self.assertNotIn(cell, self.game.marked_to_live)
 
+    @mock.patch.object(GameOfLife, 'set_initial')
+    def test_new_sets_initial_containers(self, set_initial):
+        game = GameOfLife()
+        set_initial.assert_called_once_with()
+
+    def test_set_initial(self):
+        self.assertEqual(self.game.marked_to_live, [])
+        self.assertEqual(self.game.marked_to_die, [])
+        self.assertEqual(self.game.neighbor_counts, {})
+
     def test_tick_fires_process_cell_on_each_cell(self):
         self.game.cells = [(1,1), (1,4), (44,54), (124,54)]
         self.game.process_cell = mock.Mock()
-        self.game.tick()
         calls = [mock.call(cell) for cell in self.game.cells]
+        self.game.tick()
         self.game.process_cell.assert_has_calls(calls)
 
     def test_tick_makes_marked_cells_die(self):
@@ -39,6 +48,11 @@ class GameOfLifeTest(TestCase):
         self.game.spawn_cells= mock.Mock()
         self.game.tick()
         self.game.spawn_cells.assert_called_once_with()
+
+    def test_tick_sets_initial(self):
+        self.game.set_initial = mock.Mock()
+        self.game.tick()
+        self.game.set_initial.assert_called_once_with()
 
     def test_process_cell_increase_neighbor_counters(self):
         cell = (1, 1)
@@ -131,4 +145,32 @@ class GameOfLifeTest(TestCase):
         self.game.kill_marked_cells()
 
         expected = [(1, 2), (50, 30)]
+        self.assertItemsEqual(self.game.cells, expected)
+
+    def test_spawn_cells(self):
+        self.game.populate_marked_to_live = mock.Mock()
+        self.game.give_birth = mock.Mock()
+        self.game.spawn_cells()
+        self.game.populate_marked_to_live.assert_called_once_with()
+        self.game.give_birth.assert_called_once_with()
+
+    def test_populate_marked_to_live(self):
+        self.game.neighbor_counts = {
+            (1, 1): 2,
+            (1, 3): 3,
+            (0, 2): 1,
+            (4, 5): 8,
+            (3, 12): 3,
+        }
+        self.game.populate_marked_to_live()
+        expected = [(1,3), (3,12)]
+        self.assertItemsEqual(self.game.marked_to_live, expected)
+
+    def test_give_birth(self):
+        self.game.cells = [(1, 1), (1, 2), (2, 2), (50, 30)]
+        self.game.marked_to_live = [(2, 1), (4, 2)]
+        expected = self.game.cells + self.game.marked_to_live
+
+        self.game.give_birth()
+
         self.assertItemsEqual(self.game.cells, expected)
