@@ -22,12 +22,17 @@ class GameOfLife(object):
         self.marked_to_live = []
         self.neighbor_counts = {}
 
-    def tick(self):
+    def tick(self, life=False):
+        self.draw()
         for cell in self.cells:
             self.process_cell(cell)
         self.kill_marked_cells()
         self.spawn_cells()
         self.set_initial()
+        if life:
+            from time import sleep
+            sleep(0.1)
+            self.tick(life=True)
 
     def spawn_cells(self):
         self.populate_marked_to_live()
@@ -82,3 +87,20 @@ class GameOfLife(object):
                 if not neighbor == cell:
                     neighbors.append(neighbor)
         return neighbors
+
+    def draw(self):
+        rows = []
+        for x in range(-60, 60):
+            row = []
+            for y in range(-60, 60):
+                if (y, x) in self.cells:
+                    row.append('##')
+                else:
+                    row.append('  ')
+            rows.append(''.join(row))
+        print '\n'.join(rows)
+
+sample = [(1,1), (1,2), (3,2), (2,4), (1,5), (1,6), (1,7)]
+
+game = GameOfLife(start=sample)
+game.tick(life=True)
