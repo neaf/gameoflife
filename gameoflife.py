@@ -1,70 +1,47 @@
-class GameOfLife(object):
-    def __init__(self, start=None):
-        self.cells = start or []
-        self.set_initial()
+def evolve(cells):
+    stats = get_stats(cells)
+    return stats[3] + living(stats, cells)
 
-    def set_initial(self):
-        self.marked_to_die = []
-        self.marked_to_live = []
-        self.neighbor_counts = {}
+def get_stats(cells):
+    counts = get_neighbour_counts(cells)
+    return reverse_neighbour_counts(counts)
 
-    def tick(self):
-        for cell in self.cells:
-            self.process_cell(cell)
-        self.kill_marked_cells()
-        self.spawn_cells()
-        self.set_initial()
+def reverse_neighbour_counts(counts):
+    reversed = {}
+    for cell, count in counts.items():
+        cells = reversed.get(count, [])
+        cells.append(cell)
+        reversed[count] = cells
+    return reversed
 
-    def spawn_cells(self):
-        self.populate_marked_to_live()
-        self.give_birth()
+def get_neighbour_counts(cells, counts=None):
+    counts = counts or {}
+    for cell in cells:
+        increase_neighbour_counts(cell, counts)
+    return counts
 
-    def populate_marked_to_live(self):
-        for cell, count in self.neighbor_counts.items():
-            if count == 3:
-                self.marked_to_live.append(cell)
+def increase_neighbour_counts(cell, counts):
+    neighbours = get_neighbours(cell)
+    for cell in neighbours:
+        increase_neighbour_count(cell, counts)
 
-    def give_birth(self):
-        self.cells = set(self.cells + self.marked_to_live)
+def increase_neighbour_count(cell, counts):
+    counts[cell] = counts.get(cell, 0) + 1
 
-    def kill_marked_cells(self):
-        self.cells = filter(lambda cell: cell not in self.marked_to_die, self.cells)
+def get_neighbours(cell):
+    neighbors = []
+    for delta_x in range(-1, 2):
+        x = cell[0] + delta_x
+        for delta_y in range(-1, 2):
+            y = cell[1] + delta_y
+            neighbor = (x, y)
+            if not neighbor == cell:
+                neighbors.append(neighbor)
+    return neighbors
 
-    def process_cell(self, cell):
-        if self.should_die(cell):
-            self.marked_to_die.append(cell)
-        else:
-            self.marked_to_live.append(cell)
-        self.increase_neighbors_counts(cell)
+def list_intersection(a, b):
+    return list(set(a) & set(b))
 
-    def increase_neighbors_counts(self, cell):
-        neighbors = self.get_neighbors_coordinates(cell)
-        for neighbor in neighbors:
-            current = self.neighbor_counts.get(neighbor, 0)
-            self.neighbor_counts[neighbor] = current + 1
+def living(stats, cells):
+    return list_intersection(stats[2], cells)
 
-
-    def should_die(self, cell):
-        if 1 < self.live_neighbors_count(cell) < 4:
-            return False
-        else:
-            return True
-
-    def live_neighbors_count(self, cell):
-        neighbor_coords = self.get_neighbors_coordinates(cell)
-        count = 0
-        for cell in neighbor_coords:
-            if cell in self.cells:
-                count += 1
-        return count
-
-    def get_neighbors_coordinates(self, cell):
-        neighbors = []
-        for delta_x in range(-1, 2):
-            x = cell[0] + delta_x
-            for delta_y in range(-1, 2):
-                y = cell[1] + delta_y
-                neighbor = (x, y)
-                if not neighbor == cell:
-                    neighbors.append(neighbor)
-        return neighbors
