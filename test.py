@@ -1,14 +1,6 @@
 from unittest import TestCase
 import mock
-from life import StateParser, GameOfLife
-
-class StateParserTest(TestCase):
-    def test_input_parse(self):
-        input = "1,1 1,4 44,54 124,54"
-        expected = [(1,1), (1,4), (44,54), (124,54)]
-        parser = StateParser(input)
-        self.assertEqual(parser.get_list(), expected)
-
+from gameoflife import GameOfLife
 
 class GameOfLifeTest(TestCase):
     def setUp(self):

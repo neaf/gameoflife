@@ -1,17 +1,3 @@
-class StateParser(object):
-    def __init__(self, input):
-        self.input = input
-
-    def get_list(self):
-        list = []
-        point_strings = self.input.split(" ")
-        for point in point_strings:
-            coordinates = point.split(",")
-            x = int(coordinates[0])
-            y = int(coordinates[1])
-            list.append((x, y))
-        return list
-
 class GameOfLife(object):
     def __init__(self, start=None):
         self.cells = start or []
@@ -23,7 +9,6 @@ class GameOfLife(object):
         self.neighbor_counts = {}
 
     def tick(self):
-        self.draw()
         for cell in self.cells:
             self.process_cell(cell)
         self.kill_marked_cells()
@@ -83,27 +68,3 @@ class GameOfLife(object):
                 if not neighbor == cell:
                     neighbors.append(neighbor)
         return neighbors
-
-    def draw(self):
-        rows = []
-        for x in range(-60, 60):
-            row = []
-            for y in range(-60, 60):
-                if (y, x) in self.cells:
-                    row.append('##')
-                else:
-                    row.append('  ')
-            rows.append(''.join(row))
-        print '\n'.join(rows)
-
-if __name__ == "__main__":
-    from time import sleep
-
-    start = [(1,1), (1,2), (3,2), (2,4), (1,5), (1,6), (1,7)]
-
-    while True:
-        game = GameOfLife(start=start)
-        game.tick()
-        start = game.cells
-        sleep(0.03)
-
